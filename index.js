@@ -1,6 +1,13 @@
 const server = require('./src/server');
-const { PORT } = require('./src/config');
+const { PORT, MONGO_URI } = require('./src/config');
+const mongoose = require('mongoose');
 
-server.listen(PORT, ()=>{
-    console.log(`API corriendo en puerto ${PORT}`);
-})
+mongoose.connect(MONGO_URI, {useNewUrlParser: true}).then(()=>{
+
+    server.listen(PORT, ()=>{
+        console.log(`API corriendo en puerto ${PORT}`);
+    });
+
+}).catch(console.log);
+
+
