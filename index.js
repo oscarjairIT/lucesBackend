@@ -1,4 +1,4 @@
-const server = require('./src/server');
+const server = require('./src/middleware/index');
 const { PORT, MONGO_URI } = require('./src/config');
 const mongoose = require('mongoose');
 
