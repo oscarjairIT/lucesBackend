@@ -5,4 +5,6 @@ var router = express.Router();
 /*GET home*/
 router.use('/devices', devices);
 
+
+
 module.exports = router;
