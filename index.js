@@ -30,15 +30,20 @@ mongoose.connect(MONGO_URI, {useNewUrlParser: true}).then(()=>{
             });
 
             /* get all devices */
-            const devices = await connection.getDevices();
-            console.log(devices);
+            // const devices = await connection.getDevices();
+            // console.log(devices);
+            const auth = await connection.getCredentials();
+            const connectionAPI = new ewelink({
+                at: auth.at,
+                apiKey: auth.user.apikey,
+                region: auth.region,
+            });
+            
 
-            /* get specific devide info */
-            // const device = await connection.getDevice('<your device id>');
-            // console.log(device);
-
-            /* toggle device */
-            // await connection.toggleDevice('<your device id>');
+            // dimmer 1000413a1b
+            // switch 100039b65a
+            const status = await connectionAPI.getDevicePowerState('1000413a1b');
+            console.log(status);
 
         })();
     });
