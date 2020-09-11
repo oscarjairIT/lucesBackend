@@ -3,35 +3,20 @@ const { PORT, MONGO_URI, EWELINK_PASSWORD, EWELINK_MAIL } = require('./src/confi
 const mongoose = require('mongoose');
 const ewelink = require('ewelink-api');
 
-// const connection = new ewelink({
-//     email: EWELINK_MAIL,
-//     password: EWELINK_PASSWORD,
-//     region: 'cl',
-// });
-
-// const devices = await connection.getDevices();
-
 mongoose.connect(MONGO_URI, {useNewUrlParser: true}).then(()=>{
 
     server.listen(PORT, ()=>{
         console.log(`API corriendo en puerto ${PORT}`);
 
+        
 
-        /**TESTING EWELINK */
         (async () => {
-            console.log(EWELINK_MAIL);
-            console.log(EWELINK_PASSWORD);
-            // const region = await connection.getRegion();
-            // console.log(region);
             const connection = new ewelink({
                 email: EWELINK_MAIL,
                 password: EWELINK_PASSWORD,
                 region: 'us',
             });
 
-            /* get all devices */
-            // const devices = await connection.getDevices();
-            // console.log(devices);
             const auth = await connection.getCredentials();
             const connectionAPI = new ewelink({
                 at: auth.at,
@@ -39,13 +24,23 @@ mongoose.connect(MONGO_URI, {useNewUrlParser: true}).then(()=>{
                 region: auth.region,
             });
             
-
             // dimmer 1000413a1b
             // switch 100039b65a
-            const status = await connectionAPI.getDevicePowerState('1000413a1b');
-            console.log(status);
 
+            const devices = await connectionAPI.getDevices();
+            devices.forEach(device => {
+                console.log("*********************************************");
+                console.log("nombre: ", device.name);
+                console.log("deviceid: ", device.deviceid);
+                console.log("online: ", device.online);
+                if (device.params.state == "on" || device.params.state == "off"){
+                    console.log("estado canal: ", device.params.state);
+                } else {
+                    console.log("estado canales: ", device.params.switches);
+                } 
+            });
         })();
+        
     });
 
 }).catch(console.log);

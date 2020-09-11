@@ -1,16 +1,16 @@
 const express = require('express');
 const server = express();
-const cors = require("cors");
-const ewelink = require('ewelink-api');
 
+
+const cors = require("cors");
 server.use(express.json());
 server.use(cors());
 
-server.get("/devices", (req, res)=>{});
+// Ojala ejecutar 1 vez (al abrir app)
+server.get("/devices", (req, res)=>{
+    // ejecutar funciones de ewelink.service.js , para actualizar la BD
+        // luego Obtener data de la BD
 
-/** TESTING EWELINK */
-
-
-server.get
+});
 
 module.exports = server;
