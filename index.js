@@ -9,7 +9,7 @@ mongoose.connect(MONGO_URI, {useNewUrlParser: true}).then(()=>{
         console.log(`API corriendo en puerto ${PORT}`);
 
         
-
+        /*
         (async () => {
             const connection = new ewelink({
                 email: EWELINK_MAIL,
@@ -40,6 +40,7 @@ mongoose.connect(MONGO_URI, {useNewUrlParser: true}).then(()=>{
                 } 
             });
         })();
+        */
         
     });
 
