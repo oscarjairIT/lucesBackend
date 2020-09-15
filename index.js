@@ -1,14 +1,24 @@
-const server = require('./src/middleware/index');
+const server = require('./src/middleware');
 const { PORT, MONGO_URI, EWELINK_PASSWORD, EWELINK_MAIL } = require('./src/config');
 const mongoose = require('mongoose');
 const ewelink = require('ewelink-api');
+const { log } = require("./src/components/devices");
 
-mongoose.connect(MONGO_URI, {useNewUrlParser: true}).then(()=>{
+mongoose.connect(MONGO_URI, {useNewUrlParser: true, useUnifiedTopology: true }).then(()=>{
 
     server.listen(PORT, ()=>{
         console.log(`API corriendo en puerto ${PORT}`);
 
-        
+        // (async ()=>{
+
+        //     let devices = await log.find();
+        //     console.log(devices);
+        // })();
+        // mongoose.connection.db.listCollections().toArray(function (err, names) {
+        //     console.log(names); // [{ name: 'dbname.myCollection' }]
+        //     module.exports.Collection = names;
+        // });
+
         /*
         (async () => {
             const connection = new ewelink({
