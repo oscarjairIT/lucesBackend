@@ -18,11 +18,11 @@ server.get("/devices", async(req, res)=>{
     // console.log(devices);
     try {
         devices = await Device.find();
-        console.log(devices);
+        // console.log(devices);
     } catch(err){
         console.log(err);
     }
-
+    /*
     devices.forEach(device => {
         // console.log(device);
         (async () => {
@@ -45,6 +45,7 @@ server.get("/devices", async(req, res)=>{
                 console.log("[getDevicePowerState] Para este dispositivo no disponible por ewelink");
             } 
             else if (device.channels.length > 1) {
+                // console.log(device.channels[0].state);
                 const status1 = await connectionAPI.getDevicePowerState(device.deviceid, 1); // aveces no responde bien
                 console.log(status1);
                 const status2 = await connectionAPI.getDevicePowerState(device.deviceid, 2); // aveces no responde bien
@@ -55,9 +56,35 @@ server.get("/devices", async(req, res)=>{
             }
         })();
     });
+    */
 
     return res.send({ error: false, data: devices });
 
+});
+
+server.get("/device/:id", async(req, res)=>{
+    const id = req.params.id;
+    console.log(id);
+    let device = await Device.findById(id);
+
+    return res.send({error: false, data: device});
+});
+
+server.get("/devices/find/:name", async (req, res) => {
+    const name = req.params.name;
+    console.log(name);
+    Device.find({
+        name: name
+    }, function(err, result) {
+        if (err) {
+            // console.log(err);
+            return res.send({ error: err, data: ''});
+        } else {
+            // console.log(result);
+            return res.send({ error: false, data: result });
+        }
+    });
+    // return res.send({ error: false, data: devices });
 });
 
 module.exports = server;
