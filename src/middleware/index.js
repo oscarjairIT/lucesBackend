@@ -9,6 +9,11 @@ const cors = require("cors");
 server.use(express.json());
 server.use(cors());
 
+/**
+ * 
+ * API NODE
+ */
+/**OK*/
 // Ojala ejecutar 1 vez (al abrir app)
 server.get("/devices", async(req, res)=>{
     // ejecutar funciones de ewelink.service.js , para actualizar la BD
@@ -62,6 +67,8 @@ server.get("/devices", async(req, res)=>{
 
 });
 
+/**OK */
+// localhost:3000/device/5f50127e4cad6de1ec455d67
 server.get("/device/:id", async(req, res)=>{
     const id = req.params.id;
     console.log(id);
@@ -70,6 +77,8 @@ server.get("/device/:id", async(req, res)=>{
     return res.send({error: false, data: device});
 });
 
+/**OK */
+// localhost:3000/devices/find/Dimmer1
 server.get("/devices/find/:name", async (req, res) => {
     const name = req.params.name;
     console.log(name);
@@ -85,6 +94,114 @@ server.get("/devices/find/:name", async (req, res) => {
         }
     });
     // return res.send({ error: false, data: devices });
+});
+
+
+/**
+ *  API EWELINK
+ */
+
+// Turn device [OK]
+// localhost:3000/ewe/device/on/100039b65a/1/off
+server.get("/ewe/device/on/:deviceid/:channel/:state", async(req, res)=>{
+    const deviceid = req.params.deviceid;
+    const channel = req.params.channel;
+    const state = req.params.state;
+    console.log(deviceid + " " + channel + " " + state);
+
+    (async () => {
+        const connection = new ewelink({
+            email: EWELINK_MAIL,
+            password: EWELINK_PASSWORD,
+            region: 'us',
+        });
+
+        const auth = await connection.getCredentials();
+        const connectionAPI = new ewelink({
+            at: auth.at,
+            apiKey: auth.user.apikey,
+            region: auth.region,
+        });
+
+        const status = await connectionAPI.setDevicePowerState(deviceid, state ,channel);
+        console.log(status);
+        return res.send({ error: false, data: status }); // { status: 'ok', state: 'on', channel: '1' }
+    })();
+
+    // return res.send({ error: false, data: status });
+});
+
+// Get Current State/Status [OK]
+// localhost:3000/ewe/device/state/100039b65a/1
+server.get("/ewe/device/state/:deviceid/:channel", async(req, res)=>{
+    const deviceid = req.params.deviceid;
+    const channel = req.params.channel;
+    console.log(deviceid + " " + channel);
+
+    (async () => {
+        const connection = new ewelink({
+            email: EWELINK_MAIL,
+            password: EWELINK_PASSWORD,
+            region: 'us',
+        });
+
+        const auth = await connection.getCredentials();
+        const connectionAPI = new ewelink({
+            at: auth.at,
+            apiKey: auth.user.apikey,
+            region: auth.region,
+        });
+
+        const status = await connectionAPI.getDevicePowerState(deviceid, channel);
+        console.log(status);
+        return res.send({ error: false, data: status }); // { status: 'ok', state: 'off', channel: '1' }
+    })();
+});
+
+// Turn device AT
+server.get("/ewe/device/on/:deviceid/:channel/:state/:date", async(req, res)=>{
+    const deviceid = req.params.deviceid;
+    const channel = req.params.channel;
+    const state = req.params.state;
+    const date = req.params.date;
+    console.log(deviceid + " " + channel + " " + state + " " + date);
+
+    currentDate = new Date();
+    console.log(currentDate);
+
+    setTimeout(() => {
+        // currentDate = new Date();
+        // console.log(currentDate);
+        
+        (async () => {
+            const connection = new ewelink({
+                email: EWELINK_MAIL,
+                password: EWELINK_PASSWORD,
+                region: 'us',
+            });
+    
+            const auth = await connection.getCredentials();
+            const connectionAPI = new ewelink({
+                at: auth.at,
+                apiKey: auth.user.apikey,
+                region: auth.region,
+            });
+    
+    
+            const status = await connectionAPI.setDevicePowerState(deviceid, state ,channel);
+            console.log(status);
+            // return res.send({ error: false, data: status }); // { status: 'ok', state: 'on', channel: '1' }
+        })();
+        
+    }, date);
+
+
+
+
+
+
+
+    return res.send({ error: false, data: "agendado" });
 });
 
 module.exports = server;
