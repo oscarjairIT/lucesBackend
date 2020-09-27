@@ -3,7 +3,9 @@ const server = express();
 const { EWELINK_PASSWORD, EWELINK_MAIL } = require('../config');
 const ewelink = require('ewelink-api');
 const { Device } = require("../components/devices");
+const { CronJob } = require("../components/cronjobs");
 const cors = require("cors");
+const cron = require("node-cron");
 
 
 server.use(express.json());
@@ -96,6 +98,24 @@ server.get("/devices/find/:name", async (req, res) => {
     // return res.send({ error: false, data: devices });
 });
 
+// Kill CronJob by idkey changing alive parameter en BD
+server.post("/cronjob/update", async (req, res)=>{
+    const id = req.body.id;
+    const newState = req.body.newState;
+
+    console.log("REQUEST (/cronjob/update): id="+id + " newState=" + newState);
+
+    let cronjob = await CronJob.findById(id);
+    // console.log("CronJob antes de update: " + cronjob);
+    const resp = await cronjob.updateOne({
+        _id: id,
+        alive: newState
+    });
+    cronjob = await CronJob.findById(id);
+    // console.log("CronJob despues de update: " + cronjob);
+
+    return res.send({ error: false, data: cronjob });
+});
 
 /**
  *  API EWELINK
@@ -107,7 +127,7 @@ server.get("/ewe/device/on/:deviceid/:channel/:state", async(req, res)=>{
     const deviceid = req.params.deviceid;
     const channel = req.params.channel;
     const state = req.params.state;
-    console.log(deviceid + " " + channel + " " + state);
+    console.log("REQUEST (/ewe/device/on/): deviceid="+deviceid + " channel=" + channel + " state=" + state);
 
     (async () => {
         const connection = new ewelink({
@@ -159,21 +179,46 @@ server.get("/ewe/device/state/:deviceid/:channel", async(req, res)=>{
 });
 
 // Turn device AT
-server.get("/ewe/device/on/:deviceid/:channel/:state/:date", async(req, res)=>{
-    const deviceid = req.params.deviceid;
-    const channel = req.params.channel;
-    const state = req.params.state;
-    const date = req.params.date;
-    console.log(deviceid + " " + channel + " " + state + " " + date);
+server.post("/ewe/device", async(req, res)=>{
+    const deviceid = req.body.deviceid;
+    const channel = req.body.channel;
+    const state = req.body.state;
+    // DateTime
+    const sec = req.body.sec;
+    const min = req.body.min;
+    const hour = req.body.hour;
 
-    currentDate = new Date();
-    console.log(currentDate);
+    // Create CronJob en DB
+    const newCronJob = await CronJob.create({
+        deviceid: deviceid,
+        channel: channel,
+        state: state,
+        min: min,
+        hour: hour,
+        alive: true
+    });
+    // console.log("Nuevo CronJob: ", newCronJob._id);
+    let key = {
+        id: newCronJob._id,
+        alive: true
+    }
 
-    setTimeout(() => {
-        // currentDate = new Date();
-        // console.log(currentDate);
+    console.log("REQUEST (/ewe/device): deviceid="+deviceid + " channel=" + channel + " state=" + state +  " sec=" + sec + " min=" + min + " hour=" + hour);
+
+    cronDate = sec + " " + min + " " + hour + " * * *" 
+
+    // https://crontab.guru/
+    // * * * * * *
+    // seg min hr dia mes ano
+    const task = cron.schedule(cronDate, 
+    ()=>{
+        currentDate = new Date();
+        console.log("Starting job ["+key.id+"]  at "+currentDate);
         
         (async () => {
+            // Actualizar con BD estado de key
+            key.alive = await GetAliveState(key.id); // resultado de la BD
+            // console.log("inside: "+key.alive);
             const connection = new ewelink({
                 email: EWELINK_MAIL,
                 password: EWELINK_PASSWORD,
@@ -186,22 +231,32 @@ server.get("/ewe/device/on/:deviceid/:channel/:state/:date", async(req, res)=>{
                 apiKey: auth.user.apikey,
                 region: auth.region,
             });
-    
-    
-            const status = await connectionAPI.setDevicePowerState(deviceid, state ,channel);
-            console.log(status);
+
+            if(!key.alive){
+                console.log("Destroying cronjob ["+key.id+"]");
+                task.destroy();
+                // console.log("Stopping job ["+key.id+"]")
+                // task.stop();
+                // console.log(task.getStatus());
+            } else {
+                const status = await connectionAPI.setDevicePowerState(deviceid, state ,channel);
+                console.log(status);
+            }
             // return res.send({ error: false, data: status }); // { status: 'ok', state: 'on', channel: '1' }
         })();
         
-    }, date);
-
-
-
-
-
-
-
+    });
+        
     return res.send({ error: false, data: "agendado" });
 });
+
+
+/** Functions */
+async function GetAliveState(id){
+
+    let cronjob = await CronJob.findById(id);
+    // console.log("GetFunction: "+cronjob.alive);
+    return cronjob.alive;
+}
 
 module.exports = server;
