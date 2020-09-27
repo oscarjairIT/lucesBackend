@@ -253,7 +253,6 @@ server.post("/ewe/device", async(req, res)=>{
 
 /** Functions */
 async function GetAliveState(id){
-
     let cronjob = await CronJob.findById(id);
     // console.log("GetFunction: "+cronjob.alive);
     return cronjob.alive;
